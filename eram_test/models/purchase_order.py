@@ -1,8 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.tools import (formatLang)
 
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
+class PurchaseOrder(models.Model):
+    _inherit = 'purchase.order'
 
     invoice_payments_widget = fields.Binary(
         compute='_compute_payments_widget_reconciled_info',
@@ -11,18 +11,17 @@ class SaleOrder(models.Model):
 
     def _get_invoice_ids(self):
         for order in self:
-            invoices = order.order_line.invoice_lines.move_id.filtered(lambda r: r.move_type in ('out_invoice', 'out_refund'))
+            invoices = order.mapped('order_line.invoice_lines.move_id')
             order.invoice_ids = invoices
             return order.invoice_ids
 
-
     def _compute_payments_widget_reconciled_info(self):
         move_ids = self._get_invoice_ids()
-        for move in move_ids:
-            payments_widget_vals = {'title': _('Less Payment'), 'outstanding': False, 'content': []}
+        payments_widget_vals = {'title': _('Less Payment'), 'outstanding': False, 'content': []}
+        reconciled_vals = []
 
+        for move in move_ids:
             if move.state == 'posted' and move.is_invoice(include_receipts=True):
-                reconciled_vals = []
                 reconciled_partials = move._get_all_reconciled_invoice_partials()
                 for reconciled_partial in reconciled_partials:
                     counterpart_line = reconciled_partial['aml']
@@ -51,9 +50,11 @@ class SaleOrder(models.Model):
                         'amount_company_currency': formatLang(self.env, abs(counterpart_line.balance), currency_obj=counterpart_line.company_id.currency_id),
                         'amount_foreign_currency': foreign_currency and formatLang(self.env, abs(counterpart_line.amount_currency), currency_obj=foreign_currency)
                     })
-                payments_widget_vals['content'] = reconciled_vals
 
-            if payments_widget_vals['content']:
-                self.invoice_payments_widget = payments_widget_vals
-            else:
-                self.invoice_payments_widget = False
+        reconciled_vals = sorted(reconciled_vals, key=lambda x: x["date"])
+        payments_widget_vals['content'] = reconciled_vals
+
+        if payments_widget_vals['content']:
+            self.invoice_payments_widget = payments_widget_vals
+        else:
+            self.invoice_payments_widget = False

@@ -18,13 +18,19 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'sale', 'account'],
+    'depends': ['base', 'sale', 'account', 'sales_tasks'],
 
     # always loaded
     'data': [
         'views/account_move.xml',
         'views/sale_order.xml',
+        'views/purchase_order.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'eram_test/static/src/components/**/*',
+        ],
+    },
     'installable': True,
     'application': True,
     'license': 'LGPL-3'

@@ -10,7 +10,7 @@
                         <field name="journal_id_name" invisible="1"/>
                     </xpath>
                     <xpath expr="//form/header" position="attributes">
-                        <attribute name="invisible">journal_id_name in ['Miscellaneous Operations']</attribute>
+                        <attribute name="attrs">{'invisible':[('journal_id_name', 'in', ['Miscellaneous Operations'])]}</attribute>
                     </xpath>
                 </data>
             </field>
